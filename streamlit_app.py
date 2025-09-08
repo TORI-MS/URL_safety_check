@@ -10,7 +10,7 @@ import seaborn as sns
 # ---------------------------
 # 모델 & 데이터 로드
 # ---------------------------
-model = joblib.load("phishing_model.pkl")   # 학습된 랜덤포레스트 모델
+model = joblib.load("phishing_model.joblib")   # ← joblib 버전으로 교체
 known_urls = pd.read_csv("famous_url_with_alias.csv")  # 인증된 URL 목록
 dataset = pd.read_csv("dataset_phishing.csv")  # 원본 데이터셋 (분석용)
 X = dataset.drop(columns=["url", "status"])
@@ -110,20 +110,19 @@ if user_url:
         # (1) Feature 중요도 (전체 모델 기준)
         st.markdown("**모델이 학습한 주요 특징 중요도**")
         importances = model.feature_importances_
-        indices = np.argsort(importances)[-15:]  # 상위 15개만
+        indices = np.argsort(importances)[-15:]
         plt.figure(figsize=(6,5))
         sns.barplot(x=importances[indices], y=np.array(X.columns)[indices])
         plt.title("주요 Feature 중요도")
         st.pyplot(plt)
 
-        # (2) 입력 URL 값 비교 (정상 vs 피싱 평균)
+        # (2) 입력 URL 값 비교
         st.markdown("**입력 URL의 특징 값이 정상 평균과 피싱 평균 중 어디에 가까운지**")
-
         legit_mean = dataset[dataset["status"]=="legitimate"].drop(columns=["url","status"]).mean()
         phish_mean = dataset[dataset["status"]=="phishing"].drop(columns=["url","status"]).mean()
 
         explanation = []
-        for i, col in enumerate(X.columns[:30]):  # 처음 30개 feature만
+        for i, col in enumerate(X.columns[:30]):  # 처음 30개만 비교
             val = features[i]
             if abs(val - phish_mean[col]) < abs(val - legit_mean[col]):
                 explanation.append(f"🔴 {col} 값({val:.2f}) → 피싱 평균({phish_mean[col]:.2f})에 더 가까움")
